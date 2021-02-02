@@ -16,6 +16,14 @@ type Server struct {
 	port       int
 }
 
+func CallBack(conn *net.TCPConn, content []byte, length int) error {
+	_, err := conn.Write(content[:length])
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Server) Start() {
 	log.Printf("[Start] Server listener at IP :%s,Port :%s,IPversion :%s\n", s.host, strconv.Itoa(s.port), s.ipVersion)
 	//TODO ipversion
@@ -25,26 +33,18 @@ func (s *Server) Start() {
 		return
 	}
 	log.Printf("[Start] Server:%s start\n", s.serverName)
+	var id int = 0
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("accept err:", err)
 			continue
 		}
-		go func() {
-			for {
-				buffer := make([]byte, 512)
-				count, err := conn.Read(buffer)
-				if err != nil {
-					fmt.Println("read err:", err)
-					return
-				}
-				fmt.Println("from client: ", string(buffer[:count]))
-				if _, err := conn.Write(buffer[:count]); err != nil {
-					fmt.Println("write err:", err)
-				}
-			}
-		}()
+		tcpConn := conn.(*net.TCPConn)
+		// 包装成前面定义的Connection
+		connection := GetConnection(tcpConn, id, CallBack)
+		connection.Start()
+		id++
 	}
 
 }

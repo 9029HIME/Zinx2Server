@@ -18,22 +18,20 @@ type AbstractConnection interface {
 	Start()
 
 	//获取连接id
-	GetId()
+	GetId() int
 
 	//获取Conn
-	GetConn()
+	GetConn() *net.TCPConn
 
 	//获取ip
-	GetIP()
+	GetIP() net.Addr
 
 	//发送数据
 	Write()
 
 	//停止
 	Stop()
-
 }
 
 // Connection处理业务逻辑的方法，参数2是数据，参数3是数据长度
-type HandleFunc func(net.TCPConn,[]byte,int) error
-
+type HandleFunc func(*net.TCPConn, []byte, int) error
