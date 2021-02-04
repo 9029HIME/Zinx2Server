@@ -1,7 +1,7 @@
 package impl
 
 import (
-	_interface "Zinx2Server/interface"
+	_interface "Zinx2Server/interf"
 	"fmt"
 	"log"
 	"net"
@@ -14,6 +14,8 @@ type Server struct {
 	serverName string
 	host       string
 	port       int
+	//TODO 目前还是一个服务器一个router，后期会改成一个服务器多个router
+	router _interface.AbstractRouter
 }
 
 func CallBack(conn *net.TCPConn, content []byte, length int) error {
@@ -26,7 +28,6 @@ func CallBack(conn *net.TCPConn, content []byte, length int) error {
 
 func (s *Server) Start() {
 	log.Printf("[Start] Server listener at IP :%s,Port :%s,IPversion :%s\n", s.host, strconv.Itoa(s.port), s.ipVersion)
-	//TODO ipversion
 	listener, err := net.Listen(s.ipVersion, fmt.Sprintf("%s:%s", s.host, strconv.Itoa(s.port)))
 	if err != nil {
 		fmt.Println("listen err:", err)
@@ -42,7 +43,7 @@ func (s *Server) Start() {
 		}
 		tcpConn := conn.(*net.TCPConn)
 		// 包装成前面定义的Connection
-		connection := GetConnection(tcpConn, id, CallBack)
+		connection := GetConnection(tcpConn, id, s.router)
 		connection.Start()
 		id++
 	}
@@ -56,6 +57,10 @@ func (s *Server) Serve() {
 
 func (s *Server) Stop() {
 
+}
+
+func (s *Server) AddRouter(router _interface.AbstractRouter) {
+	s.router = router
 }
 
 func Launch(ipVersion string, serverName string, host string, port int) _interface.AbstractServer {

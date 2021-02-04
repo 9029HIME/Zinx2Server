@@ -1,30 +1,29 @@
 package impl
 
 import (
-	_interface "Zinx2Server/interface"
+	"Zinx2Server/interf"
 	"log"
 	"net"
 	"strconv"
 )
 
 type Connection struct {
-	Conn      *net.TCPConn
-	Id        int
-	IsClosed  bool
-	HandleAPI _interface.HandleFunc
+	Conn     *net.TCPConn
+	Id       int
+	IsClosed bool
+	router   interf.AbstractRouter
 	//用来告知当前连接已经关闭
 	Exit chan bool
 }
 
-func GetConnection(conn *net.TCPConn, id int, handleAPI _interface.HandleFunc) *Connection {
+func GetConnection(conn *net.TCPConn, id int, router interf.AbstractRouter) *Connection {
 	connection := &Connection{
-		Conn:      conn,
-		Id:        id,
-		IsClosed:  false,
-		HandleAPI: handleAPI,
-		Exit:      make(chan bool, 1),
+		Conn:     conn,
+		Id:       id,
+		IsClosed: false,
+		router:   router,
+		Exit:     make(chan bool, 1),
 	}
-
 	return connection
 }
 
@@ -58,7 +57,6 @@ func (c *Connection) Write() {
 
 //停止
 func (c *Connection) Stop() {
-	log.Printf("ID为%s的连接即将关闭\n", strconv.Itoa(c.Id))
 
 	if c.IsClosed == true {
 		log.Printf("尝试关闭一个已关闭的连接：%s\n", strconv.Itoa(c.Id))
@@ -88,10 +86,17 @@ func (c *Connection) ConnRead() {
 			}
 			continue
 		}
-
-		if err = c.HandleAPI(c.Conn, buffer, count); err != nil {
-			log.Printf("ID为%s的连接即将关闭，异常原因是：%s\n", strconv.Itoa(c.Id), err.Error())
-			break
+		// 现在不用HandleAPI了，直接将Connection包装成Request，调用router来处理请求
+		request := &RequestImpl{
+			connection: c,
+			data:       buffer[:count],
 		}
+		// TODO 有一个疑问，方法定义参数是接口，实际传参可以是接口实现类的指针
+		func(request interf.AbstractRequest) {
+			c.router.PreHandler(request)
+			c.router.DoHandle(request)
+			c.router.PostHandler(request)
+		}(request)
+
 	}
 }
