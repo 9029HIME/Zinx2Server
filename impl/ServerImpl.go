@@ -1,11 +1,11 @@
 package impl
 
 import (
-	_interface "Zinx2Server/interf"
 	"fmt"
 	"log"
 	"net"
-	"strconv"
+	"zinx2server/config"
+	_interface "zinx2server/interf"
 )
 
 //AbstractServer的实现类
@@ -13,7 +13,7 @@ type Server struct {
 	ipVersion  string
 	serverName string
 	host       string
-	port       int
+	port       string
 	//TODO 目前还是一个服务器一个router，后期会改成一个服务器多个router
 	router _interface.AbstractRouter
 }
@@ -27,8 +27,9 @@ func CallBack(conn *net.TCPConn, content []byte, length int) error {
 }
 
 func (s *Server) Start() {
-	log.Printf("[Start] Server listener at IP :%s,Port :%s,IPversion :%s\n", s.host, strconv.Itoa(s.port), s.ipVersion)
-	listener, err := net.Listen(s.ipVersion, fmt.Sprintf("%s:%s", s.host, strconv.Itoa(s.port)))
+
+	log.Printf("[Start] Server listener at IP :%s,Port :%s,IPversion :%s\n", s.host, s.port, s.ipVersion)
+	listener, err := net.Listen(s.ipVersion, fmt.Sprintf("%s:%s", s.host, s.port))
 	if err != nil {
 		fmt.Println("listen err:", err)
 		return
@@ -59,16 +60,28 @@ func (s *Server) Stop() {
 
 }
 
-func (s *Server) AddRouter(router _interface.AbstractRouter) {
+func (s *Server) AddRouter(router _interface.AbstractRouter) _interface.AbstractServer {
 	s.router = router
+	return s
 }
 
-func Launch(ipVersion string, serverName string, host string, port int) _interface.AbstractServer {
+func Launch(ipVersion string, serverName string, host string, port string) _interface.AbstractServer {
 	server := &Server{
 		ipVersion:  ipVersion,
 		serverName: serverName,
 		host:       host,
 		port:       port,
+	}
+	return server
+}
+
+func Config(configPath string) _interface.AbstractServer {
+	config := config.Init(configPath)
+	server := &Server{
+		ipVersion:  config.IPVersion,
+		serverName: config.ServerName,
+		host:       config.Host,
+		port:       config.Port,
 	}
 	return server
 }

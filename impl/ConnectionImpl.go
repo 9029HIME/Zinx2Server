@@ -1,10 +1,10 @@
 package impl
 
 import (
-	"Zinx2Server/interf"
 	"log"
 	"net"
 	"strconv"
+	"zinx2server/interf"
 )
 
 type Connection struct {

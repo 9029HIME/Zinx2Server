@@ -11,5 +11,5 @@ type AbstractServer interface {
 	Stop()
 
 	//添加路由器
-	AddRouter(router AbstractRouter)
+	AddRouter(router AbstractRouter) AbstractServer
 }

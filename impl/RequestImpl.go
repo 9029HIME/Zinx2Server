@@ -1,6 +1,6 @@
 package impl
 
-import "Zinx2Server/interf"
+import "zinx2server/interf"
 
 type RequestImpl struct {
 	connection *Connection

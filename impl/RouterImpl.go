@@ -1,8 +1,8 @@
 package impl
 
 import (
-	"Zinx2Server/interf"
 	"fmt"
+	"zinx2server/interf"
 )
 
 /**

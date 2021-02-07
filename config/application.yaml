@@ -1,0 +1,7 @@
+Server:
+  ServerName: myServer
+  Host: localhost
+  Port: 7888
+  IPVersion: tcp4
+  MaxConnection:
+  Valid: true
