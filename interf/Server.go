@@ -12,4 +12,7 @@ type AbstractServer interface {
 
 	//添加路由器
 	AddRouter(router AbstractRouter) AbstractServer
+
+	//
+	AddEndecoder(endecoder AbstractEndecoder) AbstractServer
 }

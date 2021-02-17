@@ -15,7 +15,8 @@ type Server struct {
 	host       string
 	port       string
 	//TODO 目前还是一个服务器一个router，后期会改成一个服务器多个router
-	router _interface.AbstractRouter
+	router    _interface.AbstractRouter
+	endecoder _interface.AbstractEndecoder
 }
 
 func CallBack(conn *net.TCPConn, content []byte, length int) error {
@@ -62,6 +63,11 @@ func (s *Server) Stop() {
 
 func (s *Server) AddRouter(router _interface.AbstractRouter) _interface.AbstractServer {
 	s.router = router
+	return s
+}
+
+func (s *Server) AddEndecoder(endecoder _interface.AbstractEndecoder) _interface.AbstractServer {
+	s.endecoder = endecoder
 	return s
 }
 

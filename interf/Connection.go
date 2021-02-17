@@ -16,7 +16,7 @@ type AbstractConnection interface {
 	GetIP() net.Addr
 
 	//发送数据
-	Write()
+	Write(id uint64, data []byte)
 
 	//停止
 	Stop()

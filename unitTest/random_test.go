@@ -51,3 +51,6 @@ func TestAutoConfig(t *testing.T) {
 	config := config2.Init("config/application.yaml")
 	fmt.Println(config)
 }
+
+func TestPtrType(t *testing.T) {
+}

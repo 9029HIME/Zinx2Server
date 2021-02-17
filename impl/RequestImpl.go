@@ -2,15 +2,19 @@ package impl
 
 import "zinx2server/interf"
 
-type RequestImpl struct {
-	connection *Connection
-	data       []byte
+type Request struct {
+	connection interf.AbstractConnection
+	msg        interf.AbstractMessage
 }
 
-func (request *RequestImpl) GetConnection() interf.AbstractConnection {
+func (request *Request) GetConnection() interf.AbstractConnection {
 	return request.connection
 }
 
-func (request *RequestImpl) GetData() []byte {
-	return request.data
+func (request *Request) GetData() []byte {
+	return request.msg.GetData()
+}
+
+func (request *Request) GetMsgId() uint64 {
+	return request.msg.GetId()
 }
