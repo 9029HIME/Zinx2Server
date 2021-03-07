@@ -32,7 +32,7 @@ func (endecoder *TlvEndecoder) Encode(message interf.AbstractMessage) ([]byte, e
 
 func (endecoder *TlvEndecoder) DecodeLength(headData []byte) (interf.AbstractMessage, error) {
 	buffer := bytes.NewBuffer(headData)
-	message := new(MessageImpl)
+	message := new(Message)
 
 	/*
 			先读长度

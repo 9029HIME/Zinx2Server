@@ -25,7 +25,7 @@ func main() {
 		data := []byte(fmt.Sprintf("%s:%s", contentTemplate, strconv.Itoa(int(flag))))
 		fmt.Println("准备发送的数据长度：", len(data))
 
-		binaryContent, err := endecoder.Encode(&impl.MessageImpl{
+		binaryContent, err := endecoder.Encode(&impl.Message{
 			Id:     flag,
 			Data:   data,
 			Length: uint64(len(data)),

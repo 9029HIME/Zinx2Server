@@ -60,7 +60,7 @@ func (c *Connection) Write(id uint64, data []byte) {
 
 	endecoder := new(TlvEndecoder)
 
-	binaryContent, err := endecoder.Encode(&MessageImpl{
+	binaryContent, err := endecoder.Encode(&Message{
 		Id:     id,
 		Data:   data,
 		Length: uint64(len(data)),

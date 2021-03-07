@@ -1,29 +1,29 @@
 package impl
 
-type MessageImpl struct {
+type Message struct {
 	Id     uint64
 	Length uint64
 	Data   []byte
 }
 
-func (message *MessageImpl) GetId() uint64 {
+func (message *Message) GetId() uint64 {
 	return message.Id
 }
-func (message *MessageImpl) SetId(id uint64) {
+func (message *Message) SetId(id uint64) {
 	message.Id = id
 }
 
-func (message *MessageImpl) GetLength() uint64 {
+func (message *Message) GetLength() uint64 {
 	return message.Length
 }
-func (message *MessageImpl) SetLength(length uint64) {
+func (message *Message) SetLength(length uint64) {
 	message.Length = length
 }
 
-func (message *MessageImpl) GetData() []byte {
+func (message *Message) GetData() []byte {
 	return message.Data
 }
 
-func (message *MessageImpl) SetData(data []byte) {
+func (message *Message) SetData(data []byte) {
 	message.Data = data
 }
