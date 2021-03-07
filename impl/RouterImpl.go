@@ -35,7 +35,7 @@ func (router *PrintCallBackRouter) PreHandler(request interf.AbstractRequest) {
 
 func (router *PrintCallBackRouter) DoHandle(request interf.AbstractRequest) {
 	//fmt.Println(string(request.GetData()))
-	request.GetConnection().GetConn().Write([]byte(fmt.Sprintf("已经收到你的消息了:%s\n", string(request.GetData()))))
+	request.GetConnection().Write(1, []byte(fmt.Sprintf("已经收到你的消息了:%s\n", string(request.GetData()))))
 	//request.GetConnection().GetConn().Write([]byte("服务端这里调用了DoHandle\n"))
 }
 
