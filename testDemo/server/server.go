@@ -25,7 +25,10 @@ func main() {
 	/*
 		基于配置文件打开，传""则用默认值
 	*/
-	impl.Config(
-		"").AddRouter(new(impl.PrintCallBackRouter)).Serve()
+	impl.Config("").
+		AddMsgHandler(
+			impl.NewMsgHandler().
+				AddRouter(uint64(1), new(impl.PrintCallBackRouter))).
+		Serve()
 
 }

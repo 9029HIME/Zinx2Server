@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"time"
 	"zinx2server/impl"
 )
@@ -21,8 +20,8 @@ func main() {
 	contentTemplate := "helloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworld"
 
 	for {
-		contentTemplate = fmt.Sprint(contentTemplate, "add")
-		data := []byte(fmt.Sprintf("%s:%s", contentTemplate, strconv.Itoa(int(flag))))
+		//contentTemplate = fmt.Sprint(contentTemplate, "add")
+		data := []byte(contentTemplate)
 		fmt.Println("准备发送的数据长度：", len(data))
 
 		binaryContent, err := endecoder.Encode(&impl.Message{
@@ -43,7 +42,6 @@ func main() {
 			return
 		}
 		fmt.Println("from server: ", string(buffer[:count]))
-		flag++
 		time.Sleep(time.Second * 1)
 	}
 }

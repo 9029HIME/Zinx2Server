@@ -11,14 +11,16 @@ type TlvEndecoder struct {
 
 // TLV编码 message → []byte
 func (endecoder *TlvEndecoder) Encode(message interf.AbstractMessage) ([]byte, error) {
-	data := bytes.NewBuffer(make([]byte, 512))
+	data := bytes.NewBuffer(make([]byte, 0))
+	length := int64(message.GetLength())
+	id := int64(message.GetId())
 	//使用小端存储，回忆一下小端和大端的区别：小端：11100 大端：00111
-	err := binary.Write(data, binary.LittleEndian, message.GetLength())
+	err := binary.Write(data, binary.LittleEndian, &length)
 	if err != nil {
 		return nil, err
 	}
 
-	err = binary.Write(data, binary.LittleEndian, message.GetId())
+	err = binary.Write(data, binary.LittleEndian, &id)
 	if err != nil {
 		return nil, err
 	}

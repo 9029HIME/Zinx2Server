@@ -12,18 +12,19 @@ type Connection struct {
 	Conn     *net.TCPConn
 	Id       int
 	IsClosed bool
-	router   interf.AbstractRouter
+	handler  interf.AbstractMsgHandler
 	//用来告知当前连接已经关闭
 	Exit chan bool
 }
 
-func GetConnection(conn *net.TCPConn, id int, router interf.AbstractRouter) *Connection {
+func GetConnection(conn *net.TCPConn, id int, handler interf.AbstractMsgHandler) *Connection {
 	connection := &Connection{
 		Conn:     conn,
 		Id:       id,
 		IsClosed: false,
-		router:   router,
-		Exit:     make(chan bool, 1),
+		// 统一连接可能会有多种消息，每种消息有多种路由，所以也用msgHandler来管理
+		handler: handler,
+		Exit:    make(chan bool, 1),
 	}
 	return connection
 }
@@ -143,14 +144,11 @@ func (c *Connection) ConnRead() {
 			msg:        msg,
 		}
 		/**
-		TODO 有一个疑问，方法定义参数是接口，实际传参可以是接口实现类的指针
 		这又回到一个基础知识点：Go里超集可以转为子集，但子集不能转为超集。参数定义为超集，可以传子集，参数定义为子集，无法传超集
 		对于interface来说，如果子集通过指针实现方法，那么只认该子集的指针
 		*/
 		func(request interf.AbstractRequest) {
-			c.router.PreHandler(request)
-			c.router.DoHandle(request)
-			c.router.PostHandler(request)
+			c.handler.Dispatch(request)
 		}(request)
 
 	}

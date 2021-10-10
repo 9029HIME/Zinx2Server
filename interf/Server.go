@@ -10,8 +10,8 @@ type AbstractServer interface {
 	//停止
 	Stop()
 
-	//添加路由器
-	AddRouter(router AbstractRouter) AbstractServer
+	//消息分发器
+	AddMsgHandler(router AbstractMsgHandler) AbstractServer
 
 	//
 	AddEndecoder(endecoder AbstractEndecoder) AbstractServer

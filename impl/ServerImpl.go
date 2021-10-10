@@ -14,8 +14,8 @@ type Server struct {
 	serverName string
 	host       string
 	port       string
-	//TODO 目前还是一个服务器一个router，后期会改成一个服务器多个router
-	router    _interface.AbstractRouter
+	// 用msgHandler来代替路由，由msgHandler统一管理消息的分发
+	handler   _interface.AbstractMsgHandler
 	endecoder _interface.AbstractEndecoder
 }
 
@@ -45,7 +45,7 @@ func (s *Server) Start() {
 		}
 		tcpConn := conn.(*net.TCPConn)
 		// 包装成前面定义的Connection
-		connection := GetConnection(tcpConn, id, s.router)
+		connection := GetConnection(tcpConn, id, s.handler)
 		connection.Start()
 		id++
 	}
@@ -61,8 +61,8 @@ func (s *Server) Stop() {
 
 }
 
-func (s *Server) AddRouter(router _interface.AbstractRouter) _interface.AbstractServer {
-	s.router = router
+func (s *Server) AddMsgHandler(handler _interface.AbstractMsgHandler) _interface.AbstractServer {
+	s.handler = handler
 	return s
 }
 

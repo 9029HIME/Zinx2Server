@@ -1,9 +1,19 @@
 package impl
 
-import "zinx2server/interf"
+import (
+	"log"
+	"strconv"
+	"zinx2server/interf"
+)
 
 type MsgHandler struct {
 	maps map[uint64]interf.AbstractRouter
+}
+
+func NewMsgHandler() interf.AbstractMsgHandler {
+	return &MsgHandler{
+		map[uint64]interf.AbstractRouter{},
+	}
 }
 
 func CreateHandler() interf.AbstractMsgHandler {
@@ -12,19 +22,23 @@ func CreateHandler() interf.AbstractMsgHandler {
 	}
 }
 
-func (msgHandler *MsgHandler) AddRouter(id uint64, router interf.AbstractRouter) {
+func (msgHandler *MsgHandler) AddRouter(id uint64, router interf.AbstractRouter) interf.AbstractMsgHandler {
 	_, ok := msgHandler.maps[id]
 	if ok {
 		panic("多个路由器不能绑定同一个id")
 	}
 	msgHandler.maps[id] = router
+	return msgHandler
 }
 
-func (msgHandler *MsgHandler) DoHandle(request interf.AbstractRequest) {
+func (msgHandler *MsgHandler) Dispatch(request interf.AbstractRequest) {
 	msgId := request.GetMsgId()
-	handler := msgHandler.maps[msgId]
+	router := msgHandler.maps[msgId]
+	if router == nil {
+		log.Printf("id = %s的消息不合法，此消息丢弃", strconv.Itoa(int(msgId)))
+	}
 
-	handler.PreHandler(request)
-	handler.DoHandle(request)
-	handler.PostHandler(request)
+	router.PreHandler(request)
+	router.DoHandle(request)
+	router.PostHandler(request)
 }
