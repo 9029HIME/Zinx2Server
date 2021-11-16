@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"reflect"
 	"testing"
+	"time"
 	config2 "zinx2server/config"
 )
 
@@ -52,5 +53,16 @@ func TestAutoConfig(t *testing.T) {
 	fmt.Println(config)
 }
 
-func TestPtrType(t *testing.T) {
+func TestCloseChannel(t *testing.T) {
+
+	bool := make(chan bool)
+	fmt.Println("准备开始读")
+	go func() {
+		time.Sleep(5 * time.Second)
+		close(bool)
+	}()
+
+	data := <-bool
+	fmt.Println("读结束", data)
+
 }

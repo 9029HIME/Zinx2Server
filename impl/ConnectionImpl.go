@@ -15,6 +15,8 @@ type Connection struct {
 	handler  interf.AbstractMsgHandler
 	//用来告知当前连接已经关闭
 	Exit chan bool
+	// “读协程”将写信息写到这个channel里，等待“写协程”读取并写给客户端
+	MsgChan chan []byte
 }
 
 func GetConnection(conn *net.TCPConn, id int, handler interf.AbstractMsgHandler) *Connection {
@@ -24,7 +26,8 @@ func GetConnection(conn *net.TCPConn, id int, handler interf.AbstractMsgHandler)
 		IsClosed: false,
 		// 统一连接可能会有多种消息，每种消息有多种路由，所以也用msgHandler来管理
 		handler: handler,
-		Exit:    make(chan bool, 1),
+		Exit:    make(chan bool),
+		MsgChan: make(chan []byte),
 	}
 	return connection
 }
@@ -34,7 +37,8 @@ func (c *Connection) Start() {
 	log.Printf("ID为%s的连接开启", c.Id)
 	// 当一个连接启动时，服务端要为连接开两个协程，一个用来读一个用来写
 	go c.ConnRead()
-	// TODO 写协程
+	// 写协程
+	go c.ConnWrite()
 }
 
 //获取连接id
@@ -71,9 +75,8 @@ func (c *Connection) Write(id uint64, data []byte) {
 		log.Printf("id为%s的连接在编码数据时发生异常：%s", strconv.Itoa(c.Id), err.Error())
 	}
 
-	if _, err := c.Conn.Write(binaryContent); err != nil {
-		log.Printf("id为%s的连接在写数据时发生异常：%s", strconv.Itoa(c.Id), err.Error())
-	}
+	// 往消息通道里传输数据，等待“写协程”读取
+	c.MsgChan <- binaryContent
 }
 
 //停止
@@ -86,6 +89,7 @@ func (c *Connection) Stop() {
 
 	c.Conn.Close()
 
+	// 关掉后，读协程就会读到内容，并关闭读协程
 	close(c.Exit)
 
 }
@@ -95,18 +99,6 @@ func (c *Connection) ConnRead() {
 	defer c.Stop()
 	endFlag := 0
 	for {
-		//buffer := make([]byte, 512)
-		//count, err := c.Conn.Read(buffer)
-		//if err != nil {
-		//	endFlag++
-		//	log.Printf("%s read error:%s", strconv.Itoa(c.Id), err)
-		//	if endFlag == 4 {
-		//		log.Printf("ID为%s的连接即将关闭，异常原因是：%s\n", strconv.Itoa(c.Id), err.Error())
-		//		break
-		//	}
-		//	continue
-		//}
-
 		// 现在不是直接读数据到缓冲区，而是用自定义的endecoder来解码字节流，防止拆包粘包 on 2021-02-17
 		endecoder := new(TlvEndecoder)
 		// ID和Length占了16个字节（两个uint64）
@@ -151,5 +143,20 @@ func (c *Connection) ConnRead() {
 			c.handler.Dispatch(request)
 		}(request)
 
+	}
+}
+
+func (c *Connection) ConnWrite() {
+	log.Printf("ID为%s的连接正在写\n", strconv.Itoa(c.Id))
+	for {
+		select {
+		case pendingWrite := <-c.MsgChan:
+			if _, err := c.GetConn().Write(pendingWrite); err != nil {
+				return
+			}
+		case <-c.Exit:
+			// 这里的return指结束ConnWrite()方法，继续上层返回
+			return
+		}
 	}
 }
