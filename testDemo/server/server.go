@@ -9,7 +9,7 @@ import "zinx2server/impl"
 一个连接有多个请求（Request），多个路由（Router），通过连接进行读与写操作
 一个请求包含一个信息（Message）
 一个信息的编码与解码通过一个编解码器（Endecoder）
-服务端会根据一个信息的ID调用对应的路由（Router）处理
+服务端会通过Handler根据一个信息的ID调用对应的路由（Router）处理，前提是服务端需要注册Handler
 */
 func main() {
 	/*
