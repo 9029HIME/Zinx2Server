@@ -45,7 +45,7 @@ func (s *Server) Start() {
 		}
 		tcpConn := conn.(*net.TCPConn)
 		// 包装成前面定义的Connection
-		connection := GetConnection(tcpConn, id, s.handler)
+		connection := GetConnection(tcpConn, id, s.handler, s.endecoder)
 		connection.Start()
 		id++
 	}

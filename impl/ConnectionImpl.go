@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"io"
 	"log"
 	"net"
 	"strconv"
@@ -9,25 +8,31 @@ import (
 )
 
 type Connection struct {
-	Conn     *net.TCPConn
-	Id       int
-	IsClosed bool
-	handler  interf.AbstractMsgHandler
+	Conn      *net.TCPConn
+	Id        int
+	IsClosed  bool
+	handler   interf.AbstractMsgHandler
+	endecoder interf.AbstractEndecoder
 	//用来告知当前连接已经关闭
 	Exit chan bool
 	// “读协程”将写信息写到这个channel里，等待“写协程”读取并写给客户端
 	MsgChan chan []byte
 }
 
-func GetConnection(conn *net.TCPConn, id int, handler interf.AbstractMsgHandler) *Connection {
+func GetConnection(conn *net.TCPConn, id int, handler interf.AbstractMsgHandler, endecoder interf.AbstractEndecoder) *Connection {
 	connection := &Connection{
 		Conn:     conn,
 		Id:       id,
 		IsClosed: false,
 		// 统一连接可能会有多种消息，每种消息有多种路由，所以也用msgHandler来管理
-		handler: handler,
-		Exit:    make(chan bool),
-		MsgChan: make(chan []byte),
+		handler:   handler,
+		endecoder: endecoder,
+		Exit:      make(chan bool),
+		MsgChan:   make(chan []byte),
+	}
+	// 默认使用tlv编解码器
+	if connection.endecoder == nil {
+		connection.endecoder = new(TlvEndecoder)
 	}
 	return connection
 }
@@ -97,37 +102,11 @@ func (c *Connection) Stop() {
 func (c *Connection) ConnRead() {
 	log.Printf("ID为%s的连接正在读\n", strconv.Itoa(c.Id))
 	defer c.Stop()
-	endFlag := 0
 	for {
-		// 现在不是直接读数据到缓冲区，而是用自定义的endecoder来解码字节流，防止拆包粘包 on 2021-02-17
-		endecoder := new(TlvEndecoder)
-		// ID和Length占了16个字节（两个uint64）
-		headData := make([]byte, 16)
-		if _, err := io.ReadFull(c.Conn, headData); err != nil {
-			log.Printf("id为%s的连接在读消息头时发生异常：%s\n", strconv.Itoa(c.Id), err.Error())
-			endFlag++
-			if endFlag == 4 {
-				log.Printf("ID为%s的连接即将关闭，异常原因是：%s\n", strconv.Itoa(c.Id), err.Error())
-				break
-			}
-			continue
-		}
-
-		msg, err := endecoder.DecodeLength(headData)
-
-		if err != nil {
-			log.Printf("id为%s的连接在消息头转换Message时发生异常：%s\n", strconv.Itoa(c.Id), err.Error())
-		}
-		// 将获取到的msg进行二次读取
-		if msg.GetLength() > 0 {
-			content := make([]byte, msg.GetLength())
-			if _, err := io.ReadFull(c.Conn, content); err != nil {
-				log.Printf("id为%s的连接在消息头转换Message时发生异常：%s\n", strconv.Itoa(c.Id), err.Error())
-				continue
-			}
-			msg.SetData(content)
-			log.Printf("本次接收的消息ID是%s，消息长度是%s，消息内容是%s", strconv.Itoa(int(msg.GetId())), strconv.Itoa(int(msg.GetLength())),
-				string(msg.GetData()))
+		// 这里调用服务器的endecoder来解析信息，此时会读取网络缓冲区的字节数据，即可能会阻塞
+		msg, err := c.endecoder.GetMessage(c)
+		if err != nil || msg == nil {
+			break
 		}
 
 		// 现在不用HandleAPI了，直接将Connection包装成Request，调用router来处理请求
@@ -142,7 +121,6 @@ func (c *Connection) ConnRead() {
 		func(request interf.AbstractRequest) {
 			c.handler.Dispatch(request)
 		}(request)
-
 	}
 }
 

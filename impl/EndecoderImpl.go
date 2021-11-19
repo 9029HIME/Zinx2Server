@@ -3,6 +3,9 @@ package impl
 import (
 	"bytes"
 	"encoding/binary"
+	"io"
+	"log"
+	"strconv"
 	"zinx2server/interf"
 )
 
@@ -52,4 +55,32 @@ func (endecoder *TlvEndecoder) DecodeLength(headData []byte) (interf.AbstractMes
 		return nil, err
 	}
 	return message, nil
+}
+
+func (endecoder *TlvEndecoder) GetMessage(c interf.AbstractConnection) (interf.AbstractMessage, error) {
+	var msg interf.AbstractMessage
+	var err error = nil
+	// ID和Length占了16个字节（两个uint64）
+	headData := make([]byte, 16)
+	if _, err = io.ReadFull(c.GetConn(), headData); err != nil {
+		log.Printf("id为%s的连接在读消息头时发生异常：%s\n", strconv.Itoa(c.GetId()), err.Error())
+	}
+
+	msg, err = endecoder.DecodeLength(headData)
+
+	if err != nil {
+		log.Printf("id为%s的连接在消息头转换Message时发生异常：%s\n", strconv.Itoa(c.GetId()), err.Error())
+	}
+	// 将获取到的msg进行二次读取
+	if msg.GetLength() > 0 {
+		content := make([]byte, msg.GetLength())
+		if _, err = io.ReadFull(c.GetConn(), content); err != nil {
+			log.Printf("id为%s的连接在消息头转换Message时发生异常：%s\n", strconv.Itoa(c.GetId()), err.Error())
+		}
+		msg.SetData(content)
+		log.Printf("本次接收的消息ID是%s，消息长度是%s，消息内容是%s", strconv.Itoa(int(msg.GetId())), strconv.Itoa(int(msg.GetLength())),
+			string(msg.GetData()))
+	}
+
+	return msg, err
 }

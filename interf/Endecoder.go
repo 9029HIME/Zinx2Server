@@ -12,4 +12,5 @@ package interf
 type AbstractEndecoder interface {
 	Encode(message AbstractMessage) ([]byte, error)
 	DecodeLength(headData []byte) (AbstractMessage, error)
+	GetMessage(c AbstractConnection) (AbstractMessage, error)
 }
